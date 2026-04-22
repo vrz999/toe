@@ -1,11 +1,9 @@
-Вот обновлённый HTML-код с добавленным левым меню, в котором пока присутствует только пункт «Предисловие». Дизайн адаптирован под двухколоночную структуру.
-```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ТОЭ - Предисловие и меню</title>
+    <title>ТОЭ - Динамическое содержимое глав</title>
     <style>
         * {
             margin: 0;
@@ -15,325 +13,530 @@
 
         body {
             font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.55;
-            background-color: #e9eef3;
-            color: #1e2a3a;
+            line-height: 1.5;
+            background-color: #eef2f7;
+            color: #1e2f3e;
         }
 
-        /* Двухколоночный макет с фиксированным меню */
         .layout {
             display: flex;
             max-width: 1400px;
             margin: 0 auto;
             min-height: 100vh;
-            background-color: #f8fafc;
-            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+            background-color: #ffffff;
+            box-shadow: 0 0 25px rgba(0,0,0,0.05);
         }
 
         /* ===== ЛЕВОЕ МЕНЮ ===== */
         .sidebar {
-            width: 280px;
-            background: linear-gradient(145deg, #ffffff 0%, #f4f7fc 100%);
+            width: 320px;
+            background: #f9fbfd;
             border-right: 1px solid #dce5ec;
-            padding: 2rem 0 2rem 1.2rem;
+            padding: 1.6rem 0 2rem 0;
             flex-shrink: 0;
+            overflow-y: auto;
+            max-height: 100vh;
+            position: sticky;
+            top: 0;
             box-shadow: 1px 0 8px rgba(0,0,0,0.02);
+            scroll-behavior: smooth;
         }
+
+        .sidebar::-webkit-scrollbar { width: 5px; }
+        .sidebar::-webkit-scrollbar-track { background: #e9eef3; }
+        .sidebar::-webkit-scrollbar-thumb { background: #b9cadb; border-radius: 10px; }
 
         .menu-header {
-            padding-bottom: 1.5rem;
-            margin-bottom: 1.5rem;
+            padding: 0 1.2rem 1rem 1.5rem;
             border-bottom: 2px solid #0066cc;
-            display: inline-block;
-            width: 100%;
+            margin-bottom: 1rem;
         }
-
         .menu-header h3 {
-            font-size: 1.35rem;
-            font-weight: 600;
-            color: #0b3b5f;
-            letter-spacing: -0.2px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #0a3a5e;
             display: flex;
             align-items: center;
             gap: 8px;
         }
+        .menu-header h3::before { content: "📖"; font-size: 1.5rem; }
 
-        .menu-header h3::before {
-            content: "📘";
-            font-size: 1.4rem;
+        .nav-container { padding-left: 0.5rem; padding-right: 0.8rem; }
+        .nav-main { list-style: none; }
+        .nav-main > li { margin-bottom: 0.25rem; }
+        .part-title {
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #0066aa;
+            padding: 0.75rem 1rem 0.3rem 1.2rem;
+            margin-top: 0.8rem;
         }
-
-        .nav-menu {
-            list-style: none;
-            margin-top: 0.5rem;
-        }
-
-        .nav-menu li {
-            margin-bottom: 0.5rem;
-        }
-
-        .nav-menu a {
+        .chapter-group { margin-bottom: 0.5rem; }
+        .chapter-toggle {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 0.7rem 1rem 0.7rem 0.8rem;
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 1rem;
-            color: #2c3e4e;
-            border-radius: 14px 0 0 14px;
-            transition: all 0.2s ease;
-            background: transparent;
+            justify-content: space-between;
+            padding: 0.5rem 0.8rem 0.5rem 1.2rem;
+            font-weight: 600;
+            color: #1e4a76;
+            background: #f0f4f9;
+            border-radius: 12px;
+            margin: 4px 8px 4px 0;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95rem;
         }
-
-        .nav-menu a:hover {
-            background-color: #e1ecf7;
+        .chapter-toggle:hover { background: #e6edf5; }
+        .chapter-toggle .arrow { font-size: 0.7rem; transition: transform 0.2s; }
+        .chapter-toggle.collapsed .arrow { transform: rotate(-90deg); }
+        .sub-items {
+            list-style: none;
+            padding-left: 1.8rem;
+            margin-top: 0.3rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        .sub-items.collapsed { display: none; }
+        .sub-items li { margin-bottom: 0.25rem; }
+        .sub-items a, .single-link a {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            padding: 0.45rem 0.8rem 0.45rem 1.2rem;
+            text-decoration: none;
+            font-size: 0.85rem;
+            color: #2c5270;
+            border-radius: 10px;
+            transition: all 0.15s;
+        }
+        .single-link a { padding: 0.5rem 0.8rem 0.5rem 1.2rem; font-weight: 500; }
+        .sub-items a:hover, .single-link a:hover {
+            background-color: #e3ebf3;
             color: #0056a3;
             transform: translateX(3px);
         }
-
-        /* Активный пункт (Предисловие) */
-        .nav-menu a.active {
+        a.active {
             background: #e1ecf7;
             color: #0066cc;
             font-weight: 600;
-            border-left: 4px solid #0066cc;
-            box-shadow: -2px 2px 6px rgba(0,102,204,0.08);
+            border-left: 3px solid #0066cc;
         }
-
-        .nav-menu a.active::before {
-            content: "▶";
-            font-size: 0.8rem;
-            color: #0066cc;
-            margin-left: -4px;
-        }
-
-        .nav-menu a::before {
-            content: "📖";
-            font-size: 1.2rem;
-            opacity: 0.7;
-        }
-
-        /* место для будущих пунктов меню (закомментированно, но готово к расширению) */
-        /* .nav-menu li:not(:first-child) a::before { content: "📑"; } */
+        .preface-link {
+            margin: 0.8rem 0.8rem 1rem 0;
+            border-bottom: 1px solid #dce5ec;
+            padding-bottom: 0.6rem;
+        } 
+		.preface-link a { text-decoration: unset; font-weight: 700; font-size: 1rem; background: #f0f4f9;}
 
         /* ===== ОСНОВНОЙ КОНТЕНТ ===== */
         .main-content {
             flex: 1;
             padding: 2rem 2rem 3rem 2rem;
             background: #ffffff;
+            overflow-x: auto;
         }
-
-        .paper {
-            max-width: 900px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.03);
-        }
-
+        .paper { max-width: 950px; margin: 0 auto; }
         h1 {
             font-size: 2rem;
             font-weight: 700;
             color: #0a2b44;
             border-left: 6px solid #0066cc;
             padding-left: 1.2rem;
-            margin-bottom: 1.8rem;
-            letter-spacing: -0.3px;
-        }
-
-        .chapter-content p {
             margin-bottom: 1.5rem;
+        }
+        .chapter-content p {
+            margin-bottom: 1.4rem;
             text-align: justify;
             font-size: 1.02rem;
-            color: #1e2f3c;
+            color: #1f2e3b;
         }
-
         .divider {
             border-top: 1px solid #e2e8f0;
-            margin: 2rem 0;
+            margin: 1.8rem 0;
         }
-
-        /* акцентные цитаты или подписи */
-        .accent-note {
-            background: #f0f6fe;
-            padding: 0.8rem 1.2rem;
-            border-radius: 18px;
-            font-style: normal;
-            border-left: 4px solid #0066cc;
-            margin: 1.2rem 0;
-            font-size: 0.95rem;
-        }
-
-        /* Адаптивность: на узких экранах меню уезжает вверх или становится вертикальным */
-        @media (max-width: 780px) {
-            .layout {
-                flex-direction: column;
-            }
-            .sidebar {
-                width: 100%;
-                padding: 1rem 1.5rem;
-                border-right: none;
-                border-bottom: 1px solid #dce5ec;
-            }
-            .nav-menu {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 0.8rem;
-            }
-            .nav-menu li {
-                margin-bottom: 0;
-            }
-            .nav-menu a {
-                border-radius: 40px;
-                padding: 0.5rem 1.2rem;
-                background: #f1f5f9;
-            }
-            .nav-menu a.active {
-                border-left: none;
-                background: #0066cc20;
-                border-bottom: 2px solid #0066cc;
-                border-radius: 40px;
-            }
-            .nav-menu a.active::before {
-                content: "📘";
-                margin-left: 0;
-            }
-            .menu-header {
-                border-bottom: 1px solid #cbdde9;
-            }
-            .main-content {
-                padding: 1.5rem;
-            }
-            h1 {
-                font-size: 1.7rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .sidebar {
-                padding: 1rem;
-            }
-            .main-content {
-                padding: 1rem;
-            }
-            .chapter-content p {
-                font-size: 0.96rem;
-            }
-        }
-
-        /* оформление благодарностей и мелких деталей */
         .thanks-group {
-            background-color: #fef9e3;
+            background: #fef7e0;
             padding: 1rem 1.3rem;
             border-radius: 20px;
-            margin-top: 1rem;
-            border: 1px solid #ffecb3;
+            margin: 1.2rem 0;
         }
-
-        .footer-thanks {
-            font-size: 0.95rem;
+        @media (max-width: 860px) {
+            .layout { flex-direction: column; }
+            .sidebar {
+                width: 100%;
+                max-height: 400px;
+                position: relative;
+                border-right: none;
+                border-bottom: 1px solid #d4e0ea;
+                padding: 1rem 0;
+            }
+            .main-content { padding: 1.5rem; }
         }
     </style>
 </head>
 <body>
 <div class="layout">
-    <!-- ЛЕВОЕ МЕНЮ (сейчас только Предисловие) -->
-    <aside class="sidebar">
-        <div class="menu-header">
-            <h3>Содержание</h3>
-        </div>
-        <ul class="nav-menu">
-            <!-- Активный пункт — Предисловие -->
-            <li><a href="#" class="active" id="menu-preface">Предисловие</a></li>
-            <!-- Здесь позже можно добавить другие разделы: 
-            <li><a href="#">Глава 1. Основные понятия</a></li>
-            <li><a href="#">Глава 2. Электрические цепи</a></li>
-            <li><a href="#">Приложение</a></li> 
-            -->
-        </ul>
-        <!-- маленький информационный блок (необязательно) -->
-        <div style="margin-top: 2rem; font-size: 0.75rem; color: #6c86a3; padding-right: 1rem; border-top: 1px solid #dce5ec; padding-top: 1.2rem;">
-            <span>📚 ТОЭ<br>Традиции & развитие</span>
+    <aside class="sidebar" id="sidebar-scroll">
+        <div class="menu-header"><h3>Содержание</h3></div>
+        <div class="nav-container">
+            <div class="preface-link"><a href="#" id="preface-link-main">📘 Предисловие</a></div>
+            <ul class="nav-main">
+                <li class="part-title">ЧАСТЬ I. ОСНОВНЫЕ ПОНЯТИЯ И ЗАКОНЫ</li>
+                <li class="chapter-group" data-chapter="ch1">
+                    <div class="chapter-toggle" data-target="ch1-sub"><span>📖 Глава 1. Обобщение понятий и законов электромагнитного поля</span><span class="arrow">▼</span></div>
+                    <ul class="sub-items" id="ch1-sub">
+                        <li><a href="#" data-section="1.1">1.1. Общая физическая основа задач теории электромагнитного поля и теории цепей</a></li>
+                        <li><a href="#" data-section="1.2">1.2. Заряженные частицы и электромагнитное поле как виды материи</a></li>
+                        <li><a href="#" data-section="1.3">1.3. Связь между электрическими и магнитными явлениями</a></li>
+                        <li><a href="#" data-section="1.4">1.4. Связь заряда с полем. Теорема Гаусса</a></li>
+                        <li><a href="#" data-section="1.5">1.5. Поляризация. Электрическое смещение. Постулат Максвелла</a></li>
+                        <li><a href="#" data-section="1.6">1.6. Токи проводимости, переноса и смещения</a></li>
+                        <li><a href="#" data-section="1.7">1.7. Принцип непрерывности электрического тока</a></li>
+                        <li><a href="#" data-section="1.8">1.8. Напряжение, потенциал, ЭДС</a></li>
+                        <li><a href="#" data-section="1.9">1.9. Магнитный поток. Принцип непрерывности</a></li>
+                        <li><a href="#" data-section="1.10">1.10. Закон электромагнитной индукции</a></li>
+                        <li><a href="#" data-section="1.11">1.11. Потокосцепление. ЭДС самоиндукции и взаимной индукции</a></li>
+                        <li><a href="#" data-section="1.12">1.12. Потенциальное и вихревое электрические поля</a></li>
+                        <li><a href="#" data-section="1.13">1.13. Связь магнитного поля с током</a></li>
+                        <li><a href="#" data-section="1.14">1.14. Намагниченность и напряженность поля</a></li>
+                        <li><a href="#" data-section="1.15">1.15. Закон полного тока</a></li>
+                        <li><a href="#" data-section="1.16">1.16. Основные уравнения электромагнитного поля</a></li>
+                    </ul>
+                </li>
+                <li class="chapter-group" data-chapter="ch2">
+                    <div class="chapter-toggle" data-target="ch2-sub"><span>⚡ Глава 2. Энергия и механические проявления полей</span><span class="arrow">▼</span></div>
+                    <ul class="sub-items" id="ch2-sub">
+                        <li><a href="#" data-section="2.1">2.1. Энергия системы заряженных тел. Распределение в электрическом поле</a></li>
+                        <li><a href="#" data-section="2.2">2.2. Энергия системы контуров с токами. Распределение в магнитном поле</a></li>
+                        <li><a href="#" data-section="2.3">2.3. Силы, действующие на заряженные тела</a></li>
+                        <li><a href="#" data-section="2.4">2.4. Электромагнитная сила</a></li>
+                    </ul>
+                </li>
+                <li class="chapter-group" data-chapter="q12">
+                    <div class="chapter-toggle" data-target="q1-2-sub"><span>❓ Вопросы, упражнения, задачи к главам 1 и 2</span><span class="arrow">▼</span></div>
+                    <ul class="sub-items" id="q1-2-sub">
+                        <li><a href="#" data-section="q1.1">1.1. Связь заряда. Теорема Гаусса (вопр.)</a></li>
+                        <li><a href="#" data-section="q1.2">1.2. Электрическое смещение. Постулат Максвелла</a></li>
+                        <li><a href="#" data-section="q1.3">1.3. Виды тока и непрерывность</a></li>
+                        <li><a href="#" data-section="q1.4">1.4. Электрическое напряжение и потенциал</a></li>
+                        <li><a href="#" data-section="q1.5">1.5. Магнитная индукция. Принцип непрерывности потока</a></li>
+                    </ul>
+                </li>
+                <li class="part-title" style="margin-top: 1rem;">ЧАСТЬ II. ЭЛЕКТРИЧЕСКИЕ ЦЕПИ</li>
+                <li class="chapter-group" data-chapter="ch3">
+                    <div class="chapter-toggle" data-target="ch3-sub"><span>🔌 Глава 3. Основные понятия и законы электрических цепей</span><span class="arrow">▼</span></div>
+                    <ul class="sub-items" id="ch3-sub">
+                        <li><a href="#" data-section="3.1">3.1. Элементы электрических цепей</a></li>
+                        <li><a href="#" data-section="3.2">3.2. Источники в электрических цепях</a></li>
+                        <li><a href="#" data-section="3.3">3.3. Топологические понятия схемы</a></li>
+                        <li><a href="#" data-section="3.4">3.4. Законы Кирхгофа</a></li>
+                        <li><a href="#" data-section="3.5">3.5. Топологические матрицы</a></li>
+                        <li><a href="#" data-section="3.6">3.6. Уравнения электрических цепей</a></li>
+                    </ul>
+                </li>
+                <li class="chapter-group" data-chapter="ch4">
+                    <div class="chapter-toggle" data-target="ch4-sub"><span>📈 Глава 4. Синусоидальный ток</span><span class="arrow">▼</span></div>
+                    <ul class="sub-items" id="ch4-sub">
+                        <li><a href="#" data-section="4.1">4.1. Основные величины синусоидальных ЭДС</a></li>
+                        <li><a href="#" data-section="4.2">4.2. Векторные диаграммы</a></li>
+                        <li><a href="#" data-section="4.3">4.3. Ток в r, L, C (последовательное и параллельное)</a></li>
+                        <li><a href="#" data-section="4.4">4.4. Установившийся ток в r,L,C последовательно</a></li>
+                        <li><a href="#" data-section="4.5">4.5. Параллельное соединение g, L, C</a></li>
+                        <li><a href="#" data-section="4.6">4.6. Активная, реактивная, полная мощность</a></li>
+                        <li><a href="#" data-section="4.7">4.7. Мгновенная мощность и колебания энергии</a></li>
+                        <li><a href="#" data-section="4.8">4.8. Эквивалентные параметры двухполюсника</a></li>
+                        <li><a href="#" data-section="4.9">4.9. Схемы замещения двухполюсника</a></li>
+                        <li><a href="#" data-section="4.10">4.10. Влияние факторов на параметры цепи</a></li>
+                    </ul>
+                </li>
+                <li class="chapter-group" data-chapter="q34">
+                    <div class="chapter-toggle" data-target="q3-4-sub"><span>📝 Вопросы, задачи к главам 3 и 4</span><span class="arrow">▼</span></div>
+                    <ul class="sub-items" id="q3-4-sub">
+                        <li><a href="#" data-section="q3.1">3.1-3.6. Элементы цепи, источники, топология</a></li>
+                        <li><a href="#" data-section="q4.1">4.1. Характеристики синусоидальных величин</a></li>
+                        <li><a href="#" data-section="q4.2">4.2. Векторные диаграммы</a></li>
+                        <li><a href="#" data-section="q4.3">4.3. Последовательное и параллельное соединение</a></li>
+                        <li><a href="#" data-section="q4.4">4.4. Мощность в цепи</a></li>
+                        <li><a href="#" data-section="q4.5">4.5. Эквивалентные параметры</a></li>
+                    </ul>
+                </li>
+                <li class="chapter-group" data-chapter="ch5">
+                    <div class="chapter-toggle" data-target="ch5-sub"><span>🧮 Глава 5. Методы расчета цепей</span><span class="arrow">▼</span></div>
+                    <ul class="sub-items" id="ch5-sub">
+                        <li><a href="#" data-section="5.1">5.1. Комплексный метод</a></li>
+                        <li><a href="#" data-section="5.2">5.2. Комплексные сопротивление и проводимость</a></li>
+                        <li><a href="#" data-section="5.3">5.3. Законы Ома и Кирхгофа в комплексной форме</a></li>
+                        <li><a href="#" data-section="5.4">5.4. Мощность в комплексной форме</a></li>
+                        <li><a href="#" data-section="5.5">5.5. Последовательное, параллельное, смешанное соединение</a></li>
+                        <li><a href="#" data-section="5.8">5.8. Расчет сложных цепей</a></li>
+                        <li><a href="#" data-section="5.9">5.9. Преобразование треугольник-звезда</a></li>
+                        <li><a href="#" data-section="5.10">5.10. Преобразование источников</a></li>
+                        <li><a href="#" data-section="5.11">5.11. Метод контурных токов</a></li>
+                        <li><a href="#" data-section="5.12">5.12. Метод узловых напряжений</a></li>
+                        <li><a href="#" data-section="5.13">5.13. Метод сечений</a></li>
+                        <li><a href="#" data-section="5.14">5.14. Метод смешанных величин</a></li>
+                        <li><a href="#" data-section="5.15">5.15. Принцип наложения</a></li>
+                        <li><a href="#" data-section="5.16">5.16. Принцип взаимности</a></li>
+                        <li><a href="#" data-section="5.17">5.17. Метод эквивалентного генератора</a></li>
+                    </ul>
+                </li>
+                <li class="chapter-group" data-chapter="ch6">
+                    <div class="chapter-toggle" data-target="ch6-sub"><span>🎵 Глава 6. Резонанс и частотные характеристики</span><span class="arrow">▼</span></div>
+                    <ul class="sub-items" id="ch6-sub">
+                        <li><a href="#" data-section="6.1">6.1. Резонанс при последовательном соединении</a></li>
+                        <li><a href="#" data-section="6.2">6.2. Резонанс при параллельном соединении</a></li>
+                        <li><a href="#" data-section="6.3">6.3. Резонанс в цепях с реактивными элементами</a></li>
+                        <li><a href="#" data-section="6.4">6.4. Частотные характеристики</a></li>
+                        <li><a href="#" data-section="6.5">6.5. Резонанс в цепях произвольного вида</a></li>
+                    </ul>
+                </li>
+                <li class="chapter-group" data-chapter="ch7">
+                    <div class="chapter-toggle" data-target="ch7-sub"><span>🔀 Глава 7. Многофазные цепи и симметричные составляющие</span><span class="arrow">▼</span></div>
+                    <ul class="sub-items" id="ch7-sub">
+                        <li><a href="#" data-section="7.1">7.1. Классификация многофазных цепей</a></li>
+                        <li><a href="#" data-section="7.2">7.2. Расчет трехфазных цепей</a></li>
+                        <li><a href="#" data-section="7.3">7.3. Вращающееся магнитное поле</a></li>
+                        <li><a href="#" data-section="7.4">7.4. Метод симметричных составляющих</a></li>
+                    </ul>
+                </li>
+                <li class="chapter-group" data-chapter="ch8">
+                    <div class="chapter-toggle" data-target="ch8-sub"><span>📊 Глава 8. Несинусоидальные периодические токи</span><span class="arrow">▼</span></div>
+                    <ul class="sub-items" id="ch8-sub">
+                        <li><a href="#" data-section="8.1">8.1. Разложение в ряд Фурье</a></li>
+                        <li><a href="#" data-section="8.2">8.2. Расчет цепей при несинусоидальных напряжениях</a></li>
+                        <li><a href="#" data-section="8.3">8.3. Действующие значения</a></li>
+                        <li><a href="#" data-section="8.4">8.4. Активная мощность при несинусоидальных токах</a></li>
+                        <li><a href="#" data-section="8.5">8.5. Высшие гармоники в трехфазных цепях</a></li>
+                        <li><a href="#" data-section="8.6">8.6. Симметрия кривых</a></li>
+                        <li><a href="#" data-section="8.7">8.7. Комплексная форма ряда Фурье</a></li>
+                        <li><a href="#" data-section="8.8">8.8. Биения колебаний</a></li>
+                        <li><a href="#" data-section="8.9">8.9. Модулированные колебания</a></li>
+                    </ul>
+                </li>
+                <li class="chapter-group" data-chapter="answers">
+                    <div class="chapter-toggle" data-target="answers-sub"><span>✅ Ответы на вопросы, решения упражнений и задач</span><span class="arrow">▼</span></div>
+                    <ul class="sub-items" id="answers-sub">
+                        <li><a href="#" data-section="ans1">Ответы к главам 1-2</a></li>
+                        <li><a href="#" data-section="ans3">Ответы к главам 3-4</a></li>
+                        <li><a href="#" data-section="ans5">Ответы к главе 5</a></li>
+                        <li><a href="#" data-section="ans6-8">Ответы к главам 6,7,8</a></li>
+                    </ul>
+                </li>
+                <li class="single-link"><a href="#" data-section="index">📌 Алфавитный указатель</a></li>
+            </ul>
         </div>
     </aside>
 
-    <!-- ОСНОВНАЯ ОБЛАСТЬ: текст предисловия -->
     <main class="main-content">
         <div class="paper">
-            <h1>Предисловие</h1>
-            <div class="chapter-content">
-                <p>Суть в том, что этот курс "Теоретические основы электротехники" (ТОЭ) развивался в нашей стране весь 20-й век на фоне бурного роста промышленности и активного использования энергии электромагнитного поля. Авторы хотят сказать, что в Ленинграде его создавали крупные ученые — В. Ф. Миткевич, Л. Р. Нейман и профессор П. Л. Калантаров. После войны, в 1948-м, они выпустили уникальный учебник по ТОЭ, который стал главным в СССР. Его даже перевели на другие языки, и он помог создать свои школы ТОЭ во многих странах. В 1966-м вышел новый учебник уже от Неймана и его ученика Демирчяна. А этот учебник — через 20 лет после третьего издания.</p>
-                
-                <div class="divider"></div>
-                
-                <p>Авторы объясняют, что после событий 1991 года (распада СССР) пришлось менять первоначальный план подготовки четвертого издания, потому что экономика и подходы к подготовке инженеров в России сильно изменились. За эти 20 лет техника вычислений стала другой и намного доступнее — теперь компьютеры у всех. Информационные технологии стали играть большую роль в учебе и работе. Также пришлось учитывать, что студенты стали меньше сидеть на лекциях и больше заниматься сами. Поэтому в учебник добавили разделы для самостоятельного освоения. Коровкин и Чечурин сделали новые разделы, вопросы, методички, задачник и примеры решений типовых задач.</p>
-                
-                <div class="divider"></div>
-                
-                <p>Как мы видим, за сто лет преподавания ТОЭ в СССР и России выяснилась важная вещь: сначала нужно понимать, как работают электромагнитные процессы в конкретном устройстве, а уже потом осваивать формальные расчеты. Сейчас компьютеры и программы настолько мощные, что учиться расчетным методам ради них самих уже не главное. На первый план выходит понимание сути явлений и того, как работают стандартные программы — чтобы проверять, правильно ли они выдают числа и графики, и соответствуют ли эти данные реальной работе устройства. Главная задача этого учебника — научить читателя вникать в физику процессов, а не тупо считать.</p>
-                
-                <div class="divider"></div>
-                
-                <p>Авторы особо подчеркивают роль академика Неймана — он не только в СССР, но и во многих странах развил предмет ТОЭ благодаря своим трудам и учебникам. Демирчяну и его ученикам Чечурину и Коровкину выпала почетная и трудная задача — продолжать традиции основателей курса: Миткевича, Неймана и Калантарова, которые заведовали кафедрой ТОЭ в Ленинградском политехническом институте.</p>
-                
-                <div class="divider"></div>
-                
-                <p>Авторы благодарят профессора Кузнецова за редактирование учебника, профессора Боронина за организацию работы, член-корреспондента РАН Бутырина и профессора Миронова из МЭИ за помощь в издании.</p>
-                
-                <div class="divider"></div>
-                
-                <div class="thanks-group">
-                    <p>Также авторы благодарят доцента Селину и старшего преподавателя Королеву за помощь с вопросами, упражнениями и задачами. Помогали и аспиранты — Адалев, Балагула, Миневич, Эйдемиллер, которые готовили решения задач, и это помогло им самим с диссертациями. Кандидату наук Модулиной и инженеру Кузьминой — за подготовку рукописи, доценту Кияткину и всем сотрудникам кафедры ТОЭ СПбГПУ за полезные замечания.</p>
-                </div>
-                
-                <div class="divider"></div>
-                
-                <p>И завершающий момент — финансовую помощь для издания учебника оказал РФФИ (Российский фонд фундаментальных исследований).</p>
-                
-                <!-- небольшая декоративная линия в конце -->
-                <div style="margin-top: 2.5rem; text-align: right; font-size: 0.8rem; color: #7f8c8d;">
-                    <span>✧ издание продолжает традиции кафедры ТОЭ ✧</span>
-                </div>
-            </div>
+            <h1 id="main-title"></h1>
+            <div class="chapter-content" id="dynamic-content"></div>
         </div>
     </main>
 </div>
 
-<!-- скрипт не обязателен, так как меню состоит из одного раздела, 
-     но при желании можно оставить для интерактивности (например, если в будущем добавить пункты).
-     Сейчас просто гарантируем, что клик по пункту оставляет на предисловии (скролл вверх при желании) -->
 <script>
-    (function() {
-        // В текущей версии меню содержит только пункт "Предисловие". 
-        // Тем не менее, обеспечим корректное поведение: при клике на ссылку 
-        // не перезагружать страницу, плавно скроллить к началу контента,
-        // и поддерживать активный класс (хотя он уже active).
-        const prefaceLink = document.getElementById('menu-preface');
-        if (prefaceLink) {
-            prefaceLink.addEventListener('click', function(e) {
-                e.preventDefault();
-                // Плавная прокрутка к началу основного контента (заголовку)
-                const mainTitle = document.querySelector('.main-content h1');
-                if (mainTitle) {
-                    mainTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                } else {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-                // Убедимся, что активный класс именно у этого пункта (на случай будущего расширения)
-                document.querySelectorAll('.nav-menu a').forEach(link => {
-                    link.classList.remove('active');
-                });
-                prefaceLink.classList.add('active');
-            });
-        }
 
-        // Если в будущем добавятся другие пункты меню — можно будет расширить.
-        // На данный момент меню полностью соответствует заданию — только "Предисловие".
-        // Дополнительно: фикс для адаптивного меню, чтобы при клике на логотип или пустое место ничего не ломалось.
-        console.log('Меню "Предисловие" активно. Структура готова к расширению глав.');
-    })();
+    
+    const chapterContent = {
+        // --- Предисловие (ключ "preface") ---
+        "preface": `Суть в том, что этот курс "Теоретические основы электротехники" (ТОЭ) развивался в нашей стране весь 20-й век на фоне бурного роста промышленности и активного использования энергии электромагнитного поля. Авторы хотят сказать, что в Ленинграде его создавали крупные ученые — В. Ф. Миткевич, Л. Р. Нейман и профессор П. Л. Калантаров. После войны, в 1948-м, они выпустили уникальный учебник по ТОЭ, который стал главным в СССР. Его даже перевели на другие языки, и он помог создать свои школы ТОЭ во многих странах. В 1966-м вышел новый учебник уже от Неймана и его ученика Демирчяна. А этот учебник — через 20 лет после третьего издания.
+        
+Авторы объясняют, что после событий 1991 года (распада СССР) пришлось менять первоначальный план подготовки четвертого издания, потому что экономика и подходы к подготовке инженеров в России сильно изменились. За эти 20 лет техника вычислений стала другой и намного доступнее — теперь компьютеры у всех. Информационные технологии стали играть большую роль в учебе и работе. Также пришлось учитывать, что студенты стали меньше сидеть на лекциях и больше заниматься сами. Поэтому в учебник добавили разделы для самостоятельного освоения. Коровкин и Чечурин сделали новые разделы, вопросы, методички, задачник и примеры решений типовых задач.
+        
+Как мы видим, за сто лет преподавания ТОЭ в СССР и России выяснилась важная вещь: сначала нужно понимать, как работают электромагнитные процессы в конкретном устройстве, а уже потом осваивать формальные расчеты. Сейчас компьютеры и программы настолько мощные, что учиться расчетным методам ради них самих уже не главное. На первый план выходит понимание сути явлений и того, как работают стандартные программы — чтобы проверять, правильно ли они выдают числа и графики, и соответствуют ли эти данные реальной работе устройства.
+        
+Авторы особо подчеркивают роль академика Неймана — он не только в СССР, но и во многих странах развил предмет ТОЭ благодаря своим трудам и учебникам. Демирчяну и его ученикам Чечурину и Коровкину выпала почетная и трудная задача — продолжать традиции основателей курса: Миткевича, Неймана и Калантарова, которые заведовали кафедрой ТОЭ в Ленинградском политехническом институте.
+        
+Авторы благодарят профессора Кузнецова за редактирование учебника, профессора Боронина за организацию работы, член-корреспондента РАН Бутырина и профессора Миронова из МЭИ за помощь в издании.
+        
+Также авторы благодарят доцента Селину и старшего преподавателя Королеву за помощь с вопросами, упражнениями и задачами. Помогали и аспиранты — Адалев, Балагула, Миневич, Эйдемиллер, которые готовили решения задач, и это помогло им самим с диссертациями. Кандидату наук Модулиной и инженеру Кузьминой — за подготовку рукописи, доценту Кияткину и всем сотрудникам кафедры ТОЭ СПбГПУ за полезные замечания.
+        
+И завершающий момент — финансовую помощь для издания учебника оказал РФФИ (Российский фонд фундаментальных исследований).`,
+
+        // --- Пример для главы 1.1 (Вы можете заполнить позже) ---
+        "1.1": `Здесь будет текст раздела 1.1. Общая физическая основа задач теории электромагнитного поля и теории цепей.
+        
+Первый абзац описывает фундаментальные принципы. Второй абзац — более детально. Вы можете добавлять любое количество абзацев, разделяя их пустыми строками.`,
+
+        "1.2": `Текст для раздела 1.2. Заряженные частицы и электромагнитное поле как особые виды материи. (Заполните позже)`,
+        
+        "2.1": `Энергия системы заряженных тел. Распределение энергии в электрическом поле. (Заполните позже)`,
+        
+        "5.11": `Метод контурных токов. Подробное описание алгоритма, примеры. (Заполните позже)`,
+        
+        // --- Вопросы и ответы ---
+        "q1.1": `Вопросы по теореме Гаусса: 1. Сформулируйте теорему. 2. Как она применяется? (Заполните позже)`,
+        
+        "ans1": `Ответы к главам 1-2: 1. ... 2. ... (Заполните позже)`,
+        
+        // Добавьте любые другие ключи по необходимости: "3.1", "4.5", "index" и т.д.
+        "index": `Алфавитный указатель: Ампер — стр. 45, Вектор — стр. 78 ... (Заполните позже)`
+    };
+    
+    // ========== СКРИПТ, КОТОРЫЙ ПРЕОБРАЗУЕТ ТЕКСТ В HTML И ВСТАВЛЯЕТ ==========
+    function parseTextToHTML(text) {
+        if (!text || text.trim() === "") {
+            return `<div style="padding: 2rem; text-align:center; color: gray;">📝 Содержание раздела пока не добавлено. Заполните переменную chapterContent["ключ"] = "ваш текст..."</div>`;
+        }
+        // Разбиваем по двойным переносам строк (абзацы)
+        let paragraphs = text.split(/\n\s*\n/);
+        let html = '';
+        for (let i = 0; i < paragraphs.length; i++) {
+            let para = paragraphs[i].trim();
+            if (para === "") continue;
+            // Проверяем, не является ли абзац блоком благодарностей (можно кастомно)
+            if (para.includes("благодарят") && para.length > 50 && !para.includes("divider")) {
+                html += `<div class="thanks-group"><p>${escapeHtml(para)}</p></div>`;
+            } else {
+                html += `<p>${escapeHtml(para)}</p>`;
+            }
+            // Добавляем разделитель после каждого абзаца, кроме последнего (как в оригинале)
+            if (i < paragraphs.length - 1) {
+                html += `<div class="divider"></div>`;
+            }
+        }
+        return html;
+    }
+    
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+            return c;
+        });
+    }
+    
+    function renderContent(sectionKey, titleText) {
+        const contentDiv = document.getElementById('dynamic-content');
+        const mainTitle = document.getElementById('main-title');
+        mainTitle.innerText = titleText;
+        let rawText = chapterContent[sectionKey];
+        if (!rawText && sectionKey === "preface") rawText = chapterContent["preface"];
+        if (!rawText) {
+            contentDiv.innerHTML = `<div style="padding: 2rem; background:#f0f4fa; border-radius: 24px;"><p style="font-size:1.1rem;">📘 Раздел "${titleText}"</p><p>Текст ещё не добавлен. Вы можете заполнить его в объекте <strong>chapterContent</strong> под ключом <code>${sectionKey}</code>.</p><p>Формат: обычный текст, абзацы отделяются пустой строкой.</p></div>`;
+            return;
+        }
+        const formattedHtml = parseTextToHTML(rawText);
+        contentDiv.innerHTML = formattedHtml;
+    }
+    
+    // Навигация и сохранение активного раздела (localStorage)
+    const STORAGE_ACTIVE = 'toe_active_section_flex';
+    const sidebar = document.getElementById('sidebar-scroll');
+    const allLinks = document.querySelectorAll('.sub-items a, .single-link a, .preface-link a');
+    const prefaceLink = document.getElementById('preface-link-main');
+    
+    function setActiveLink(activeLink) {
+        allLinks.forEach(l => l.classList.remove('active'));
+        if(prefaceLink) prefaceLink.classList.remove('active');
+        activeLink.classList.add('active');
+        localStorage.setItem(STORAGE_ACTIVE, activeLink.getAttribute('data-section') || (activeLink.id === 'preface-link-main' ? 'preface' : activeLink.innerText.trim()));
+    }
+    
+    function loadSection(link) {
+        let sectionKey = link.getAttribute('data-section');
+        let title = link.innerText.trim();
+        if (link.id === 'preface-link-main' || sectionKey === 'preface') {
+            sectionKey = 'preface';
+            title = 'Предисловие';
+        }
+        if (!sectionKey) sectionKey = title;
+        renderContent(sectionKey, title);
+        setActiveLink(link);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        if(sidebar) { /* сохраним позже */ }
+    }
+    
+    allLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            loadSection(link);
+        });
+    });
+    if(prefaceLink) {
+        prefaceLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            loadSection(prefaceLink);
+        });
+    }
+    
+    // Восстановление последнего открытого раздела
+    function restoreLastSection() {
+        const lastSection = localStorage.getItem(STORAGE_ACTIVE);
+        if (lastSection) {
+            let targetLink = null;
+            allLinks.forEach(link => {
+                const sec = link.getAttribute('data-section');
+                if (sec === lastSection || link.innerText.trim() === lastSection) targetLink = link;
+            });
+            if (!targetLink && lastSection === 'preface') targetLink = prefaceLink;
+            if (targetLink) loadSection(targetLink);
+            else if (prefaceLink) loadSection(prefaceLink);
+        } else {
+            if (prefaceLink) loadSection(prefaceLink);
+        }
+    }
+    
+    // Аккордеон с сохранением состояния
+    function saveAccordionState() {
+        const toggles = document.querySelectorAll('.chapter-toggle');
+        const state = {};
+        toggles.forEach(toggle => {
+            const targetId = toggle.getAttribute('data-target');
+            const sub = document.getElementById(targetId);
+            if (sub) state[targetId] = sub.classList.contains('collapsed');
+        });
+        localStorage.setItem('toe_accordion_state_new', JSON.stringify(state));
+    }
+    function restoreAccordion() {
+        const saved = localStorage.getItem('toe_accordion_state_new');
+        if (!saved) return;
+        try {
+            const state = JSON.parse(saved);
+            for (const [id, collapsed] of Object.entries(state)) {
+                const sub = document.getElementById(id);
+                const toggle = document.querySelector(`.chapter-toggle[data-target="${id}"]`);
+                if (sub && toggle) {
+                    if (collapsed) {
+                        sub.classList.add('collapsed');
+                        toggle.classList.add('collapsed');
+                    } else {
+                        sub.classList.remove('collapsed');
+                        toggle.classList.remove('collapsed');
+                    }
+                }
+            }
+        } catch(e) {}
+    }
+    
+    document.querySelectorAll('.chapter-toggle').forEach(toggle => {
+        toggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const targetId = toggle.getAttribute('data-target');
+            const sub = document.getElementById(targetId);
+            if (sub) {
+                sub.classList.toggle('collapsed');
+                toggle.classList.toggle('collapsed');
+                saveAccordionState();
+            }
+        });
+    });
+    
+    if(sidebar) {
+        sidebar.addEventListener('scroll', () => localStorage.setItem('toe_sidebar_scroll_pos', sidebar.scrollTop));
+        const savedScroll = localStorage.getItem('toe_sidebar_scroll_pos');
+        if(savedScroll) sidebar.scrollTop = parseInt(savedScroll, 10);
+    }
+    
+    restoreAccordion();
+    restoreLastSection();
+    window.addEventListener('beforeunload', () => saveAccordionState());
 </script>
 </body>
 </html>
-```
