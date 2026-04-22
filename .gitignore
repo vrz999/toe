@@ -1,1 +1,1 @@
-Nothing needs to be added to .gitignore since only a README.md file was modified and there are no build artifacts, dependencies, or temporary files in the changes.
+(preface.html is just an HTML file - a source/config file - so according to rule 6, since there are no build artifacts, dependencies, or temp files in the changes, and it's only a source file, the output should be empty)
