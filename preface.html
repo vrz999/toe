@@ -2,8 +2,8 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ТОЭ - Динамическое содержимое глав</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>ТОЭ - Мобильное меню со свайпом</title>
     <style>
         * {
             margin: 0;
@@ -16,18 +16,20 @@
             line-height: 1.5;
             background-color: #eef2f7;
             color: #1e2f3e;
+            overflow-x: hidden;
         }
 
+        /* ===== ОСНОВНОЙ ЛЭЙАУТ ===== */
         .layout {
             display: flex;
             max-width: 1400px;
             margin: 0 auto;
             min-height: 100vh;
             background-color: #ffffff;
-            box-shadow: 0 0 25px rgba(0,0,0,0.05);
+            position: relative;
         }
 
-        /* ===== ЛЕВОЕ МЕНЮ ===== */
+        /* ===== ЛЕВОЕ МЕНЮ (десктоп — статичное, мобильное — выезжающее) ===== */
         .sidebar {
             width: 320px;
             background: #f9fbfd;
@@ -40,11 +42,110 @@
             top: 0;
             box-shadow: 1px 0 8px rgba(0,0,0,0.02);
             scroll-behavior: smooth;
+            transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            z-index: 1000;
         }
 
-        .sidebar::-webkit-scrollbar { width: 5px; }
-        .sidebar::-webkit-scrollbar-track { background: #e9eef3; }
-        .sidebar::-webkit-scrollbar-thumb { background: #b9cadb; border-radius: 10px; }
+        /* Мобильная версия: меню скрыто за экраном */
+        @media (max-width: 860px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                width: 280px;
+                transform: translateX(-100%);
+                z-index: 1050;
+                box-shadow: 2px 0 20px rgba(0,0,0,0.2);
+                border-right: none;
+                transition: transform 0.3s ease;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .layout {
+                flex-direction: column;
+            }
+            .main-content {
+                width: 100%;
+                padding: 1rem;
+            }
+            /* оверлей (затемнение) */
+            .menu-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                z-index: 1040;
+                opacity: 0;
+                visibility: hidden;
+                transition: opacity 0.25s ease, visibility 0.25s;
+            }
+            .menu-overlay.active {
+                opacity: 1;
+                visibility: visible;
+            }
+            /* кнопка бургер */
+            .burger-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                width: 54px;
+                height: 54px;
+                background: #0066cc;
+                border-radius: 50%;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+                cursor: pointer;
+                z-index: 1060;
+                border: none;
+                color: white;
+                font-size: 28px;
+                transition: transform 0.2s, background 0.2s;
+            }
+            .burger-btn:active {
+                transform: scale(0.94);
+                background: #004c99;
+            }
+            /* подсказка для свайпа */
+            .swipe-hint {
+                position: fixed;
+                bottom: 90px;
+                right: 20px;
+                background: rgba(0,0,0,0.7);
+                color: white;
+                padding: 6px 12px;
+                border-radius: 30px;
+                font-size: 12px;
+                z-index: 1060;
+                pointer-events: none;
+                backdrop-filter: blur(4px);
+                font-weight: 500;
+                opacity: 0.9;
+            }
+        }
+
+        @media (min-width: 861px) {
+            .burger-btn, .menu-overlay, .swipe-hint {
+                display: none;
+            }
+        }
+
+        /* стили скролла для меню */
+        .sidebar::-webkit-scrollbar {
+            width: 5px;
+        }
+        .sidebar::-webkit-scrollbar-track {
+            background: #e9eef3;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #b9cadb;
+            border-radius: 10px;
+        }
 
         .menu-header {
             padding: 0 1.2rem 1rem 1.5rem;
@@ -59,11 +160,18 @@
             align-items: center;
             gap: 8px;
         }
-        .menu-header h3::before { content: "📖"; font-size: 1.5rem; }
+        .menu-header h3::before {
+            content: "📖";
+            font-size: 1.5rem;
+        }
 
-        .nav-container { padding-left: 0.5rem; padding-right: 0.8rem; }
-        .nav-main { list-style: none; }
-        .nav-main > li { margin-bottom: 0.25rem; }
+        .nav-container {
+            padding-left: 0.5rem;
+            padding-right: 0.8rem;
+        }
+        .nav-main {
+            list-style: none;
+        }
         .part-title {
             font-weight: 700;
             font-size: 0.85rem;
@@ -73,7 +181,9 @@
             padding: 0.75rem 1rem 0.3rem 1.2rem;
             margin-top: 0.8rem;
         }
-        .chapter-group { margin-bottom: 0.5rem; }
+        .chapter-group {
+            margin-bottom: 0.5rem;
+        }
         .chapter-toggle {
             display: flex;
             align-items: center;
@@ -88,9 +198,16 @@
             transition: all 0.2s;
             font-size: 0.95rem;
         }
-        .chapter-toggle:hover { background: #e6edf5; }
-        .chapter-toggle .arrow { font-size: 0.7rem; transition: transform 0.2s; }
-        .chapter-toggle.collapsed .arrow { transform: rotate(-90deg); }
+        .chapter-toggle:hover {
+            background: #e6edf5;
+        }
+        .chapter-toggle .arrow {
+            font-size: 0.7rem;
+            transition: transform 0.2s;
+        }
+        .chapter-toggle.collapsed .arrow {
+            transform: rotate(-90deg);
+        }
         .sub-items {
             list-style: none;
             padding-left: 1.8rem;
@@ -98,8 +215,12 @@
             margin-bottom: 0.5rem;
             display: block;
         }
-        .sub-items.collapsed { display: none; }
-        .sub-items li { margin-bottom: 0.25rem; }
+        .sub-items.collapsed {
+            display: none;
+        }
+        .sub-items li {
+            margin-bottom: 0.25rem;
+        }
         .sub-items a, .single-link a {
             display: flex;
             align-items: baseline;
@@ -111,7 +232,10 @@
             border-radius: 10px;
             transition: all 0.15s;
         }
-        .single-link a { padding: 0.5rem 0.8rem 0.5rem 1.2rem; font-weight: 500; }
+        .single-link a {
+            padding: 0.5rem 0.8rem 0.5rem 1.2rem;
+            font-weight: 500;
+        }
         .sub-items a:hover, .single-link a:hover {
             background-color: #e3ebf3;
             color: #0056a3;
@@ -127,8 +251,12 @@
             margin: 0.8rem 0.8rem 1rem 0;
             border-bottom: 1px solid #dce5ec;
             padding-bottom: 0.6rem;
-        } 
-		.preface-link a { text-decoration: unset; font-weight: 700; font-size: 1rem; background: #f0f4f9;}
+        }
+        .preface-link a {
+            font-weight: 700;
+            font-size: 1rem;
+            background: #eef3fc;
+        }
 
         /* ===== ОСНОВНОЙ КОНТЕНТ ===== */
         .main-content {
@@ -136,8 +264,12 @@
             padding: 2rem 2rem 3rem 2rem;
             background: #ffffff;
             overflow-x: auto;
+            transition: margin-left 0.2s;
         }
-        .paper { max-width: 950px; margin: 0 auto; }
+        .paper {
+            max-width: 950px;
+            margin: 0 auto;
+        }
         h1 {
             font-size: 2rem;
             font-weight: 700;
@@ -163,31 +295,35 @@
             margin: 1.2rem 0;
         }
         @media (max-width: 860px) {
-            .layout { flex-direction: column; }
-            .sidebar {
-                width: 100%;
-                max-height: 400px;
-                position: relative;
-                border-right: none;
-                border-bottom: 1px solid #d4e0ea;
-                padding: 1rem 0;
+            .main-content {
+                padding: 1rem 1rem 80px 1rem;
             }
-            .main-content { padding: 1.5rem; }
+            h1 {
+                font-size: 1.6rem;
+            }
         }
     </style>
 </head>
 <body>
 <div class="layout">
-    <aside class="sidebar" id="sidebar-scroll">
-        <div class="menu-header"><h3>Содержание</h3></div>
+    <!-- Оверлей для мобильного меню -->
+    <div class="menu-overlay" id="menuOverlay"></div>
+
+    <!-- ЛЕВОЕ МЕНЮ (полное оглавление) -->
+    <aside class="sidebar" id="sidebarMenu">
+        <div class="menu-header">
+            <h3>Содержание</h3>
+        </div>
         <div class="nav-container">
-            <div class="preface-link"><a href="#" id="preface-link-main">📘 Предисловие</a></div>
+            <div class="preface-link">
+                <a href="#" id="preface-link-main">📘 Предисловие</a>
+            </div>
             <ul class="nav-main">
                 <li class="part-title">ЧАСТЬ I. ОСНОВНЫЕ ПОНЯТИЯ И ЗАКОНЫ</li>
                 <li class="chapter-group" data-chapter="ch1">
                     <div class="chapter-toggle" data-target="ch1-sub"><span>📖 Глава 1. Обобщение понятий и законов электромагнитного поля</span><span class="arrow">▼</span></div>
                     <ul class="sub-items" id="ch1-sub">
-                        <li><a href="#" data-section="1.1">1.1. Общая физическая основа задач теории электромагнитного поля и теории цепей</a></li>
+                        <li><a href="#" data-section="1.1">1.1. Общая физическая основа задач теории поля и цепей</a></li>
                         <li><a href="#" data-section="1.2">1.2. Заряженные частицы и электромагнитное поле как виды материи</a></li>
                         <li><a href="#" data-section="1.3">1.3. Связь между электрическими и магнитными явлениями</a></li>
                         <li><a href="#" data-section="1.4">1.4. Связь заряда с полем. Теорема Гаусса</a></li>
@@ -335,108 +471,86 @@
             <div class="chapter-content" id="dynamic-content"></div>
         </div>
     </main>
+
+    <!-- Кнопка бургер для мобильных -->
+    <button class="burger-btn" id="burgerBtn" aria-label="Открыть меню">☰</button>
+    <div class="swipe-hint" id="swipeHint">👈 Свайп вправо → меню</div>
 </div>
 
 <script>
-
-    
+    // ==================== КОНТЕНТ (заполняете здесь) ====================
     const chapterContent = {
-        // --- Предисловие (ключ "preface") ---
         "preface": `Суть в том, что этот курс "Теоретические основы электротехники" (ТОЭ) развивался в нашей стране весь 20-й век на фоне бурного роста промышленности и активного использования энергии электромагнитного поля. Авторы хотят сказать, что в Ленинграде его создавали крупные ученые — В. Ф. Миткевич, Л. Р. Нейман и профессор П. Л. Калантаров. После войны, в 1948-м, они выпустили уникальный учебник по ТОЭ, который стал главным в СССР. Его даже перевели на другие языки, и он помог создать свои школы ТОЭ во многих странах. В 1966-м вышел новый учебник уже от Неймана и его ученика Демирчяна. А этот учебник — через 20 лет после третьего издания.
         
 Авторы объясняют, что после событий 1991 года (распада СССР) пришлось менять первоначальный план подготовки четвертого издания, потому что экономика и подходы к подготовке инженеров в России сильно изменились. За эти 20 лет техника вычислений стала другой и намного доступнее — теперь компьютеры у всех. Информационные технологии стали играть большую роль в учебе и работе. Также пришлось учитывать, что студенты стали меньше сидеть на лекциях и больше заниматься сами. Поэтому в учебник добавили разделы для самостоятельного освоения. Коровкин и Чечурин сделали новые разделы, вопросы, методички, задачник и примеры решений типовых задач.
         
-Как мы видим, за сто лет преподавания ТОЭ в СССР и России выяснилась важная вещь: сначала нужно понимать, как работают электромагнитные процессы в конкретном устройстве, а уже потом осваивать формальные расчеты. Сейчас компьютеры и программы настолько мощные, что учиться расчетным методам ради них самих уже не главное. На первый план выходит понимание сути явлений и того, как работают стандартные программы — чтобы проверять, правильно ли они выдают числа и графики, и соответствуют ли эти данные реальной работе устройства.
+Как мы видим, за сто лет преподавания ТОЭ в СССР и России выяснилась важная вещь: сначала нужно понимать, как работают электромагнитные процессы в конкретном устройстве, а уже потом осваивать формальные расчеты. Сейчас компьютеры и программы настолько мощные, что учиться расчетным методам ради них самих уже не главное. На первый план выходит понимание сути явлений и того, как работают стандартные программы — чтобы проверять, правильно ли они выдают числа и графики.
         
-Авторы особо подчеркивают роль академика Неймана — он не только в СССР, но и во многих странах развил предмет ТОЭ благодаря своим трудам и учебникам. Демирчяну и его ученикам Чечурину и Коровкину выпала почетная и трудная задача — продолжать традиции основателей курса: Миткевича, Неймана и Калантарова, которые заведовали кафедрой ТОЭ в Ленинградском политехническом институте.
+Авторы особо подчеркивают роль академика Неймана. Демирчяну и его ученикам Чечурину и Коровкину выпала почетная задача продолжать традиции основателей курса: Миткевича, Неймана и Калантарова.
         
-Авторы благодарят профессора Кузнецова за редактирование учебника, профессора Боронина за организацию работы, член-корреспондента РАН Бутырина и профессора Миронова из МЭИ за помощь в издании.
+Авторы благодарят профессора Кузнецова, профессора Боронина, член-корреспондента РАН Бутырина и профессора Миронова из МЭИ за помощь в издании.
         
-Также авторы благодарят доцента Селину и старшего преподавателя Королеву за помощь с вопросами, упражнениями и задачами. Помогали и аспиранты — Адалев, Балагула, Миневич, Эйдемиллер, которые готовили решения задач, и это помогло им самим с диссертациями. Кандидату наук Модулиной и инженеру Кузьминой — за подготовку рукописи, доценту Кияткину и всем сотрудникам кафедры ТОЭ СПбГПУ за полезные замечания.
+Также авторы благодарят доцента Селину и старшего преподавателя Королеву, аспирантов Адалева, Балагулу, Миневича, Эйдемиллера. Кандидату наук Модулиной и инженеру Кузьминой — за подготовку рукописи, доценту Кияткину и всем сотрудникам кафедры ТОЭ СПбГПУ.
         
-И завершающий момент — финансовую помощь для издания учебника оказал РФФИ (Российский фонд фундаментальных исследований).`,
-
-        // --- Пример для главы 1.1 (Вы можете заполнить позже) ---
-        "1.1": `Здесь будет текст раздела 1.1. Общая физическая основа задач теории электромагнитного поля и теории цепей.
+Финансовую помощь для издания учебника оказал РФФИ.`,
         
-Первый абзац описывает фундаментальные принципы. Второй абзац — более детально. Вы можете добавлять любое количество абзацев, разделяя их пустыми строками.`,
-
-        "1.2": `Текст для раздела 1.2. Заряженные частицы и электромагнитное поле как особые виды материи. (Заполните позже)`,
-        
-        "2.1": `Энергия системы заряженных тел. Распределение энергии в электрическом поле. (Заполните позже)`,
-        
-        "5.11": `Метод контурных токов. Подробное описание алгоритма, примеры. (Заполните позже)`,
-        
-        // --- Вопросы и ответы ---
-        "q1.1": `Вопросы по теореме Гаусса: 1. Сформулируйте теорему. 2. Как она применяется? (Заполните позже)`,
-        
-        "ans1": `Ответы к главам 1-2: 1. ... 2. ... (Заполните позже)`,
-        
-        // Добавьте любые другие ключи по необходимости: "3.1", "4.5", "index" и т.д.
-        "index": `Алфавитный указатель: Ампер — стр. 45, Вектор — стр. 78 ... (Заполните позже)`
+        "1.1": `Здесь будет полный текст раздела 1.1. Общая физическая основа задач теории электромагнитного поля и теории цепей. (Вы можете заполнить позже)`,
+        "1.2": `Раздел 1.2. Заряженные частицы и электромагнитное поле как особые виды материи. Опишите подробно.`,
+        "5.11": `Метод контурных токов: алгоритм, система уравнений, примеры расчета.`,
+        "index": `Алфавитный указатель: Ампер — стр. 12, Вектор — стр. 34, и т.д.`
     };
     
-    // ========== СКРИПТ, КОТОРЫЙ ПРЕОБРАЗУЕТ ТЕКСТ В HTML И ВСТАВЛЯЕТ ==========
+    // Функция парсинга текста в HTML
     function parseTextToHTML(text) {
-        if (!text || text.trim() === "") {
-            return `<div style="padding: 2rem; text-align:center; color: gray;">📝 Содержание раздела пока не добавлено. Заполните переменную chapterContent["ключ"] = "ваш текст..."</div>`;
-        }
-        // Разбиваем по двойным переносам строк (абзацы)
+        if (!text || text.trim() === "") return `<div style="padding:2rem; text-align:center; color:gray;">📝 Содержание раздела временно отсутствует. Заполните chapterContent["ключ"]</div>`;
         let paragraphs = text.split(/\n\s*\n/);
         let html = '';
         for (let i = 0; i < paragraphs.length; i++) {
             let para = paragraphs[i].trim();
             if (para === "") continue;
-            // Проверяем, не является ли абзац блоком благодарностей (можно кастомно)
             if (para.includes("благодарят") && para.length > 50 && !para.includes("divider")) {
                 html += `<div class="thanks-group"><p>${escapeHtml(para)}</p></div>`;
             } else {
                 html += `<p>${escapeHtml(para)}</p>`;
             }
-            // Добавляем разделитель после каждого абзаца, кроме последнего (как в оригинале)
-            if (i < paragraphs.length - 1) {
-                html += `<div class="divider"></div>`;
-            }
+            if (i < paragraphs.length - 1) html += `<div class="divider"></div>`;
         }
         return html;
     }
-    
-    function escapeHtml(str) {
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
-            return c;
-        });
-    }
+    function escapeHtml(str) { return str.replace(/[&<>]/g, function(m) { return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'; }); }
     
     function renderContent(sectionKey, titleText) {
-        const contentDiv = document.getElementById('dynamic-content');
-        const mainTitle = document.getElementById('main-title');
-        mainTitle.innerText = titleText;
-        let rawText = chapterContent[sectionKey];
-        if (!rawText && sectionKey === "preface") rawText = chapterContent["preface"];
+        document.getElementById('main-title').innerText = titleText;
+        let rawText = chapterContent[sectionKey] || (sectionKey === "preface" ? chapterContent["preface"] : null);
         if (!rawText) {
-            contentDiv.innerHTML = `<div style="padding: 2rem; background:#f0f4fa; border-radius: 24px;"><p style="font-size:1.1rem;">📘 Раздел "${titleText}"</p><p>Текст ещё не добавлен. Вы можете заполнить его в объекте <strong>chapterContent</strong> под ключом <code>${sectionKey}</code>.</p><p>Формат: обычный текст, абзацы отделяются пустой строкой.</p></div>`;
+            document.getElementById('dynamic-content').innerHTML = `<div style="padding:2rem; background:#f0f4fa; border-radius:24px;"><p>📘 Раздел "${titleText}"</p><p>Текст ещё не добавлен. Добавьте его в объект chapterContent под ключом <code>${sectionKey}</code>.</p></div>`;
             return;
         }
-        const formattedHtml = parseTextToHTML(rawText);
-        contentDiv.innerHTML = formattedHtml;
+        document.getElementById('dynamic-content').innerHTML = parseTextToHTML(rawText);
     }
     
-    // Навигация и сохранение активного раздела (localStorage)
-    const STORAGE_ACTIVE = 'toe_active_section_flex';
-    const sidebar = document.getElementById('sidebar-scroll');
+    // Навигация
     const allLinks = document.querySelectorAll('.sub-items a, .single-link a, .preface-link a');
     const prefaceLink = document.getElementById('preface-link-main');
+    const sidebarMenu = document.getElementById('sidebarMenu');
+    const overlay = document.getElementById('menuOverlay');
+    const burger = document.getElementById('burgerBtn');
     
-    function setActiveLink(activeLink) {
+    function closeMenu() {
+        if (sidebarMenu.classList.contains('open')) {
+            sidebarMenu.classList.remove('open');
+            overlay.classList.remove('active');
+        }
+    }
+    function openMenu() {
+        sidebarMenu.classList.add('open');
+        overlay.classList.add('active');
+    }
+    
+    function setActiveLink(active) {
         allLinks.forEach(l => l.classList.remove('active'));
         if(prefaceLink) prefaceLink.classList.remove('active');
-        activeLink.classList.add('active');
-        localStorage.setItem(STORAGE_ACTIVE, activeLink.getAttribute('data-section') || (activeLink.id === 'preface-link-main' ? 'preface' : activeLink.innerText.trim()));
+        active.classList.add('active');
     }
     
     function loadSection(link) {
@@ -450,52 +564,41 @@
         renderContent(sectionKey, title);
         setActiveLink(link);
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        if(sidebar) { /* сохраним позже */ }
+        if (window.innerWidth <= 860) closeMenu();
     }
     
-    allLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            loadSection(link);
-        });
-    });
-    if(prefaceLink) {
-        prefaceLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            loadSection(prefaceLink);
-        });
-    }
+    allLinks.forEach(link => link.addEventListener('click', (e) => { e.preventDefault(); loadSection(link); }));
+    if(prefaceLink) prefaceLink.addEventListener('click', (e) => { e.preventDefault(); loadSection(prefaceLink); });
     
-    // Восстановление последнего открытого раздела
-    function restoreLastSection() {
-        const lastSection = localStorage.getItem(STORAGE_ACTIVE);
-        if (lastSection) {
-            let targetLink = null;
-            allLinks.forEach(link => {
-                const sec = link.getAttribute('data-section');
-                if (sec === lastSection || link.innerText.trim() === lastSection) targetLink = link;
-            });
-            if (!targetLink && lastSection === 'preface') targetLink = prefaceLink;
-            if (targetLink) loadSection(targetLink);
-            else if (prefaceLink) loadSection(prefaceLink);
-        } else {
-            if (prefaceLink) loadSection(prefaceLink);
+    // Мобильные события: бургер + свайп
+    burger.addEventListener('click', openMenu);
+    overlay.addEventListener('click', closeMenu);
+    
+    let touchStartX = 0;
+    let touchEndX = 0;
+    document.body.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; }, false);
+    document.body.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        const delta = touchEndX - touchStartX;
+        if (delta > 60 && touchStartX < 30 && !sidebarMenu.classList.contains('open')) {
+            openMenu();
+        } else if (delta < -50 && sidebarMenu.classList.contains('open')) {
+            closeMenu();
         }
-    }
+    });
     
-    // Аккордеон с сохранением состояния
+    // Аккордеон + localStorage
     function saveAccordionState() {
-        const toggles = document.querySelectorAll('.chapter-toggle');
         const state = {};
-        toggles.forEach(toggle => {
+        document.querySelectorAll('.chapter-toggle').forEach(toggle => {
             const targetId = toggle.getAttribute('data-target');
             const sub = document.getElementById(targetId);
             if (sub) state[targetId] = sub.classList.contains('collapsed');
         });
-        localStorage.setItem('toe_accordion_state_new', JSON.stringify(state));
+        localStorage.setItem('toe_accordion_mobile', JSON.stringify(state));
     }
     function restoreAccordion() {
-        const saved = localStorage.getItem('toe_accordion_state_new');
+        const saved = localStorage.getItem('toe_accordion_mobile');
         if (!saved) return;
         try {
             const state = JSON.parse(saved);
@@ -503,18 +606,12 @@
                 const sub = document.getElementById(id);
                 const toggle = document.querySelector(`.chapter-toggle[data-target="${id}"]`);
                 if (sub && toggle) {
-                    if (collapsed) {
-                        sub.classList.add('collapsed');
-                        toggle.classList.add('collapsed');
-                    } else {
-                        sub.classList.remove('collapsed');
-                        toggle.classList.remove('collapsed');
-                    }
+                    if (collapsed) { sub.classList.add('collapsed'); toggle.classList.add('collapsed'); }
+                    else { sub.classList.remove('collapsed'); toggle.classList.remove('collapsed'); }
                 }
             }
         } catch(e) {}
     }
-    
     document.querySelectorAll('.chapter-toggle').forEach(toggle => {
         toggle.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -528,15 +625,9 @@
         });
     });
     
-    if(sidebar) {
-        sidebar.addEventListener('scroll', () => localStorage.setItem('toe_sidebar_scroll_pos', sidebar.scrollTop));
-        const savedScroll = localStorage.getItem('toe_sidebar_scroll_pos');
-        if(savedScroll) sidebar.scrollTop = parseInt(savedScroll, 10);
-    }
-    
     restoreAccordion();
-    restoreLastSection();
-    window.addEventListener('beforeunload', () => saveAccordionState());
+    // по умолчанию загружаем предисловие
+    if (prefaceLink) loadSection(prefaceLink);
 </script>
 </body>
 </html>
